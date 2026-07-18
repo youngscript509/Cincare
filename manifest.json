@@ -1,0 +1,24 @@
+{
+  "name": "Cin'care Beauty",
+  "short_name": "Cin'care",
+  "description": "Glow. Care. Love Yourself. — Boutique beauté en ligne",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a0f14",
+  "theme_color": "#c9497a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

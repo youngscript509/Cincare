@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Cin'care Beauty — Admin</title>
+<meta name="theme-color" content="#150c10">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --noir:#150c10; --noir-2:#1f1319; --noir-3:#2a1b23;
+  --corail:#e0577a; --corail-vif:#ff6f91; --corail-fonce:#c9497a;
+  --or:#d4af6a; --or-clair:#f0d494; --or-fonce:#a8823f;
+  --creme:#faf3ea; --texte-doux:#e9d9c9; --texte-fade:#b79c8f;
+  --succes:#6fbf8a; --danger:#e0577a;
+  --radius:16px;
+  --font-display:'Playfair Display',serif; --font-body:'Poppins',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:var(--font-body); background: radial-gradient(ellipse at top,#241419 0%,var(--noir) 55%,#0d0709 100%);
+  color:var(--texte-doux); min-height:100vh; padding-bottom:80px;
+}
+.wrap{ max-width:640px; margin:0 auto; padding: 0 16px; }
+
+/* Login */
+#loginScreen{
+  min-height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; padding:20px;
+}
+.login-card{
+  width:100%; max-width:360px; background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid rgba(212,175,106,.2); border-radius: 22px; padding:30px 24px; text-align:center;
+}
+.login-mark{
+  width:60px;height:60px;border-radius:50%; margin:0 auto 14px;
+  background: radial-gradient(circle at 35% 30%, var(--or-clair), var(--or-fonce) 75%);
+  display:flex;align-items:center;justify-content:center; font-family:var(--font-display); font-weight:700; font-size:22px; color:#3a2410;
+}
+.login-card h1{ font-family:var(--font-display); font-size:20px; color:var(--creme); margin-bottom:4px; }
+.login-card p{ font-size:12px; color:var(--texte-fade); margin-bottom:22px; }
+.login-card input{
+  width:100%; padding:13px 14px; margin-bottom:12px; border-radius:12px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(212,175,106,.25); color:var(--creme); font-size:14px; outline:none;
+}
+.login-card input:focus{ border-color:var(--corail-vif); }
+#loginError{ color:var(--corail-vif); font-size:12px; margin-bottom:10px; min-height:16px; }
+
+/* Header admin */
+header{ padding: 18px 0 12px; display:flex; align-items:center; justify-content:space-between; }
+.h-brand{ display:flex; align-items:center; gap:10px; }
+.h-mark{ width:36px;height:36px;border-radius:50%; background: radial-gradient(circle at 35% 30%, var(--or-clair), var(--or-fonce) 75%); display:flex;align-items:center;justify-content:center; font-family:var(--font-display); font-weight:700; font-size:14px; color:#3a2410; }
+.h-brand span{ font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--creme); }
+.h-brand small{ display:block; font-size:10px; color: var(--or-clair); letter-spacing:.05em; text-transform:uppercase; }
+.logout-btn{ font-size:11.5px; color:var(--texte-fade); cursor:pointer; border:1px solid rgba(212,175,106,.25); padding:7px 12px; border-radius:999px; }
+
+/* Stats */
+.stats-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+.stat-card{
+  background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid rgba(212,175,106,.18); border-radius:14px; padding:14px 10px; text-align:center;
+}
+.stat-card .v{ font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--or-clair); }
+.stat-card .l{ font-size:10px; color:var(--texte-fade); margin-top:2px; text-transform:uppercase; letter-spacing:.03em; }
+
+/* Tabs */
+.tabs{ display:flex; gap:8px; margin-bottom:16px; background:rgba(255,255,255,.03); padding:5px; border-radius:14px; }
+.tab{ flex:1; text-align:center; padding:10px 4px; border-radius:10px; font-size:12.5px; font-weight:600; color:var(--texte-fade); cursor:pointer; transition: all .2s ease; }
+.tab.active{ background: linear-gradient(120deg,var(--corail),var(--corail-fonce)); color:#fff; }
+
+.view{ display:none; }
+.view.active{ display:block; }
+
+/* Bouton flottant + */
+.fab-add{
+  position:fixed; right:20px; bottom:24px; z-index:50;
+  width:56px;height:56px;border-radius:50%; cursor:pointer;
+  background: linear-gradient(135deg,var(--corail-vif),var(--corail-fonce));
+  display:flex;align-items:center;justify-content:center; font-size:26px; color:#fff;
+  box-shadow: 0 8px 22px rgba(224,87,122,.45);
+}
+
+/* Filtre commandes */
+.filter-chips{ display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:4px; }
+.filter-chips::-webkit-scrollbar{ display:none; }
+.fchip{ flex-shrink:0; padding:7px 14px; border-radius:999px; font-size:11.5px; font-weight:600; background:rgba(255,255,255,.04); border:1px solid rgba(212,175,106,.2); color:var(--texte-doux); cursor:pointer; white-space:nowrap; }
+.fchip.active{ background: linear-gradient(120deg,var(--or-clair),var(--or-fonce)); color:#3a2410; border-color:transparent; }
+
+/* Liste produits admin */
+.prod-row{
+  display:flex; gap:12px; align-items:center; background: rgba(255,255,255,.03); border:1px solid rgba(212,175,106,.14);
+  border-radius:14px; padding:10px; margin-bottom:10px;
+}
+.prod-row img{ width:54px;height:54px;border-radius:10px; object-fit:cover; background:#2a1b23; flex-shrink:0; }
+.prod-row .ph{ width:54px;height:54px;border-radius:10px; background:#2a1b23; display:flex;align-items:center;justify-content:center; font-size:20px; flex-shrink:0; }
+.prod-info{ flex:1; min-width:0; }
+.prod-info .nm{ font-size:13px; font-weight:600; color:var(--creme); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prod-info .meta{ font-size:11px; color:var(--texte-fade); margin-top:2px; }
+.prod-info .pr{ font-size:12.5px; font-weight:700; color:var(--corail-vif); margin-top:2px; }
+.prod-actions{ display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+.toggle-active{ width:36px;height:20px;border-radius:999px; background:rgba(255,255,255,.1); position:relative; cursor:pointer; transition: background .2s ease; }
+.toggle-active.on{ background: var(--succes); }
+.toggle-active .dot{ position:absolute; top:2px; left:2px; width:16px;height:16px;border-radius:50%; background:#fff; transition: left .2s ease; }
+.toggle-active.on .dot{ left:18px; }
+.icon-mini{ width:28px;height:28px;border-radius:8px; display:flex;align-items:center;justify-content:center; cursor:pointer; background:rgba(255,255,255,.05); color:var(--texte-fade); }
+.icon-mini svg{ width:14px;height:14px; }
+.icon-mini.danger{ color: var(--corail-vif); }
+
+/* Commandes */
+.order-card{ background: rgba(255,255,255,.03); border:1px solid rgba(212,175,106,.14); border-radius:16px; padding:14px; margin-bottom:12px; }
+.order-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.order-top .num{ font-weight:700; color:var(--or-clair); font-size:13.5px; }
+.order-top .date{ font-size:10.5px; color:var(--texte-fade); }
+.status-pill{ font-size:10px; font-weight:700; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:.02em; }
+.status-pill.en_attente{ background: rgba(212,175,106,.18); color:var(--or-clair); }
+.status-pill.confirmee{ background: rgba(111,191,138,.18); color:var(--succes); }
+.status-pill.preparation{ background: rgba(224,87,122,.18); color: var(--corail-vif); }
+.status-pill.livree{ background: rgba(111,191,138,.25); color:var(--succes); }
+.status-pill.annulee{ background: rgba(255,255,255,.08); color:var(--texte-fade); }
+.order-client{ font-size:12px; color:var(--texte-doux); margin-bottom:8px; }
+.order-client b{ color:var(--creme); }
+.order-items{ font-size:11.5px; color:var(--texte-fade); border-top:1px dashed rgba(212,175,106,.2); border-bottom:1px dashed rgba(212,175,106,.2); padding:8px 0; margin-bottom:8px; }
+.order-items div{ display:flex; justify-content:space-between; padding:2px 0; }
+.order-total{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.order-total .t{ font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--creme); }
+.status-select{
+  width:100%; padding:10px; border-radius:10px; background: rgba(255,255,255,.05); border:1px solid rgba(212,175,106,.25);
+  color:var(--creme); font-family:var(--font-body); font-size:12.5px; outline:none;
+}
+.wa-link{ display:inline-flex; align-items:center; gap:6px; margin-top:8px; font-size:11.5px; color: var(--succes); cursor:pointer; }
+
+.empty{ text-align:center; padding:50px 20px; color:var(--texte-fade); }
+
+/* Modal produit */
+.modal-overlay{ position:fixed; inset:0; z-index:100; background:rgba(10,5,7,.75); backdrop-filter: blur(3px); display:none; align-items:flex-end; justify-content:center; }
+.modal-overlay.open{ display:flex; }
+.modal-sheet{
+  width:100%; max-width:640px; max-height:92vh; overflow-y:auto;
+  background: linear-gradient(180deg, var(--noir-3), var(--noir-2));
+  border-radius:24px 24px 0 0; border:1px solid rgba(212,175,106,.2); border-bottom:none;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom));
+}
+.modal-sheet h3{ font-family:var(--font-display); font-size:18px; color:var(--creme); margin-bottom:16px; }
+.fg{ margin-bottom:13px; }
+.fg label{ font-size:11px; font-weight:600; color:var(--or-clair); text-transform:uppercase; letter-spacing:.03em; display:block; margin-bottom:6px; }
+.fg input, .fg textarea, .fg select{
+  width:100%; padding:12px 13px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(212,175,106,.25);
+  color:var(--creme); font-family:var(--font-body); font-size:13.5px; outline:none;
+}
+.fg textarea{ min-height:70px; resize:vertical; }
+.fg-row{ display:flex; gap:10px; }
+.fg-row .fg{ flex:1; }
+.img-preview{ width:100%; aspect-ratio:1/1; max-width:180px; margin:0 auto 12px; border-radius:14px; overflow:hidden; background:#2a1b23; display:flex;align-items:center;justify-content:center; }
+.img-preview img{ width:100%;height:100%;object-fit:cover; }
+.btn-primary{ width:100%; padding:14px; border:none; border-radius:14px; cursor:pointer; background: linear-gradient(120deg,var(--corail-vif),var(--corail-fonce)); color:#fff; font-weight:600; font-size:14px; margin-top:6px; }
+.btn-danger-outline{ width:100%; padding:12px; border-radius:14px; cursor:pointer; background:transparent; border:1px solid rgba(224,87,122,.4); color:var(--corail-vif); font-weight:600; font-size:12.5px; margin-top:10px; }
+.close-modal{ position:absolute; top:16px; right:20px; width:30px;height:30px;border-radius:50%; background:rgba(255,255,255,.06); display:flex;align-items:center;justify-content:center; cursor:pointer; color:var(--texte-fade); }
+.modal-sheet{ position:relative; }
+
+.toast{
+  position:fixed; top:20px; left:50%; transform: translateX(-50%) translateY(-100px); z-index:200;
+  background: linear-gradient(120deg,var(--noir-3),var(--noir-2)); border:1px solid rgba(212,175,106,.35); border-radius:14px;
+  padding:13px 20px; font-size:13px; color:var(--creme); transition: transform .4s cubic-bezier(.2,.85,.2,1);
+}
+.toast.show{ transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-mark">CC</div>
+    <h1>Espace Admin</h1>
+    <p>Cin'care Beauty — Gestion boutique</p>
+    <div id="loginError"></div>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPass" placeholder="Mot de passe">
+    <button class="btn-primary" id="btnLogin" style="margin-top:4px;">Se connecter</button>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="wrap" id="dashboard" style="display:none;">
+  <header>
+    <div class="h-brand">
+      <div class="h-mark">CC</div>
+      <div><span>Cin'care Beauty</span><small>Espace admin</small></div>
+    </div>
+    <div class="logout-btn" id="btnLogout">Déconnexion</div>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="v" id="statOrders">0</div><div class="l">Commandes</div></div>
+    <div class="stat-card"><div class="v" id="statPending">0</div><div class="l">En attente</div></div>
+    <div class="stat-card"><div class="v" id="statProducts">0</div><div class="l">Produits</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="orders">📦 Commandes</div>
+    <div class="tab" data-tab="products">💄 Produits</div>
+  </div>
+
+  <!-- ---- COMMANDES ---- -->
+  <div class="view active" id="viewOrders">
+    <div class="filter-chips" id="orderFilters">
+      <div class="fchip active" data-status="all">Toutes</div>
+      <div class="fchip" data-status="en_attente">En attente</div>
+      <div class="fchip" data-status="confirmee">Confirmées</div>
+      <div class="fchip" data-status="preparation">Préparation</div>
+      <div class="fchip" data-status="livree">Livrées</div>
+      <div class="fchip" data-status="annulee">Annulées</div>
+    </div>
+    <div id="ordersContainer"></div>
+  </div>
+
+  <!-- ---- PRODUITS ---- -->
+  <div class="view" id="viewProducts">
+    <div id="productsContainer"></div>
+  </div>
+</div>
+
+<div class="fab-add" id="fabAdd" style="display:none;">+</div>
+
+<!-- ============ MODAL PRODUIT ============ -->
+<div class="modal-overlay" id="modalProduct">
+  <div class="modal-sheet">
+    <div class="close-modal" id="closeModalProduct">✕</div>
+    <h3 id="modalTitle">Nouveau produit</h3>
+    <div class="img-preview"><img id="mImgPreview" src="" style="display:none;"><span id="mImgPh">🌸</span></div>
+    <div class="fg">
+      <label>Lien de l'image</label>
+      <input type="url" id="mImageURL" placeholder="https://...">
+    </div>
+    <div class="fg">
+      <label>Nom du produit</label>
+      <input type="text" id="mNom" placeholder="Ex: Sérum éclat visage">
+    </div>
+    <div class="fg">
+      <label>Description</label>
+      <textarea id="mDescription" placeholder="Décris le produit, ses bienfaits..."></textarea>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Prix (HTG)</label>
+        <input type="number" id="mPrix" placeholder="0">
+      </div>
+      <div class="fg">
+        <label>Prix (USD, optionnel)</label>
+        <input type="number" id="mPrixUSD" placeholder="0">
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Catégorie</label>
+        <input type="text" id="mCategorie" placeholder="Ex: Soin visage">
+      </div>
+      <div class="fg">
+        <label>Stock</label>
+        <input type="number" id="mStock" placeholder="0">
+      </div>
+    </div>
+    <div class="fg">
+      <label>Badge</label>
+      <select id="mBadge">
+        <option value="">Aucun</option>
+        <option value="Nouveau">Nouveau</option>
+        <option value="Populaire">Populaire</option>
+        <option value="Promo">Promo</option>
+      </select>
+    </div>
+    <button class="btn-primary" id="btnSaveProduct">Enregistrer le produit</button>
+    <button class="btn-danger-outline" id="btnDeleteProduct" style="display:none;">Supprimer ce produit</button>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
