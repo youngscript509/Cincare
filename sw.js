@@ -1,6 +1,12 @@
-const CACHE_NAME = 'cincare-v1';
+const CACHE_NAME = 'cincare-v2';
 const ASSETS = [
   './index.html',
+   './app.js',
+   './admin.js',
+   './admin.html',
+   './sw.js',
+    './firebse-config.js',
+   './logo1.png',
   './manifest.json'
 ];
 
